@@ -1,7 +1,9 @@
 # main.py
 import customtkinter
 from tkintermapview import TkinterMapView
-from NN import NearestNeighbor  # Import the NearestNeighbor class
+import tkinter.simpledialog as simpledialog
+from NN import NearestNeighbor  
+import csv
 
 customtkinter.set_default_color_theme("blue")
 
@@ -52,6 +54,11 @@ class App(customtkinter.CTk):
                                                 command=self.clear_marker_event)
         self.button_2.grid(pady=(20, 0), padx=(20, 20), row=1, column=0)
 
+        self.button_find_optimal_path = customtkinter.CTkButton(master=self.frame_left,
+                                                        text="Find Optimal Path",
+                                                        command=self.find_optimal_path)
+        self.button_find_optimal_path.grid(pady=(20, 0), padx=(20, 20), row=2, column=0)
+
         self.map_label = customtkinter.CTkLabel(self.frame_left, text="Tile Server:", anchor="w")
         self.map_label.grid(row=3, column=0, padx=(20, 20), pady=(20, 0))
         self.map_option_menu = customtkinter.CTkOptionMenu(self.frame_left, values=["OpenStreetMap", "Google normal", "Google satellite"],
@@ -64,10 +71,7 @@ class App(customtkinter.CTk):
                                                                        command=self.change_appearance_mode)
         self.appearance_mode_optionemenu.grid(row=6, column=0, padx=(20, 20), pady=(10, 20))
 
-        self.button_find_optimal_path = customtkinter.CTkButton(master=self.frame_left,
-                                                        text="Find Optimal Path",
-                                                        command=self.find_optimal_path)
-        self.button_find_optimal_path.grid(pady=(20, 0), padx=(20, 20), row=2, column=0)
+        
 
         # ============ frame_right ============
 
@@ -96,12 +100,36 @@ class App(customtkinter.CTk):
         self.map_option_menu.set("OpenStreetMap")
         self.appearance_mode_optionemenu.set("Dark")
 
-    def find_optimal_path(self):
-        # Extract coordinates of markers
-        marker_coordinates = [(marker.x, marker.y) for marker in self.marker_list]
+        # Load existing data from the CSV file if it exists
+        self.city_data = self.load_city_data()
 
-        # Calculate distances between markers (for simplicity, using Euclidean distance)
-        distances = [[((x1 - x2)**2 + (y1 - y2)**2)**0.5 for x1, y1 in marker_coordinates] for x2, y2 in marker_coordinates]
+
+    
+    def load_city_data(self):
+        try:
+            with open('city_data.csv', 'r') as file:
+                reader = csv.reader(file)
+                city_data = {row[0]: (float(row[1]), float(row[2])) for row in reader}
+        except FileNotFoundError:
+            city_data = {}
+        return city_data
+
+    def save_city_data(self):
+        with open('city_data.csv', 'w', newline='') as file:
+            writer = csv.writer(file)
+            for city, (latitude, longitude) in self.city_data.items():
+                writer.writerow([city, latitude, longitude])
+
+
+
+
+    def find_optimal_path(self):
+        # Extract coordinates of cities
+        city_coordinates = list(self.city_data.values())
+        print("Find optimal path: ", city_coordinates)
+
+        # Calculate distances between cities (for simplicity, using Euclidean distance)
+        distances = [[((x1 - x2)**2 + (y1 - y2)**2)**0.5 for x1, y1 in city_coordinates] for x2, y2 in city_coordinates]
 
         # Create NearestNeighbor instance
         nn_solver = NearestNeighbor(distances)
@@ -111,19 +139,34 @@ class App(customtkinter.CTk):
 
         # Draw the optimal path on the map
         for i in range(len(optimal_path) - 1):
-            start_marker = self.marker_list[optimal_path[i]]
-            end_marker = self.marker_list[optimal_path[i+1]]
-            self.map_widget.create_line(start_marker.x, start_marker.y, end_marker.x, end_marker.y, color="red")
+            start_city = list(self.city_data.keys())[optimal_path[i]]
+            end_city = list(self.city_data.keys())[optimal_path[i+1]]
+            print("Optimal path:", start_city, "->", end_city)
+
+
+
+
 
 
 
     def search_event(self, event=None):
-        self.map_widget.set_address(self.entry.get())
-        print(self.map_widget.set_address(self.entry.get()))
+        App.address = self.entry.get()
+        self.map_widget.set_address(App.address)
+        latitude, longitude = self.map_widget.get_position()
+        print(f"Coordinates of {App.address}: Latitude: {latitude}, Longitude: {longitude}")
+        
+
 
     def set_marker_event(self):
         current_position = self.map_widget.get_position()
-        self.marker_list.append(self.map_widget.set_marker(current_position[0], current_position[1]))
+        city_name = App.address
+        if city_name:
+            self.marker_list.append(self.map_widget.set_marker(current_position[0], current_position[1]))
+            self.city_data[city_name] = current_position
+            self.save_city_data()
+            print("Set marker at: ", current_position[0], current_position[1], "for city:", city_name)
+
+        
 
     def clear_marker_event(self):
         for marker in self.marker_list:
