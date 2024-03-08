@@ -1,12 +1,14 @@
+# main.py
 import customtkinter
 from tkintermapview import TkinterMapView
+from NN import NearestNeighbor  # Import the NearestNeighbor class
 
 customtkinter.set_default_color_theme("blue")
 
 
 class App(customtkinter.CTk):
 
-    APP_NAME = "TkinterMapView with CustomTkinter"
+    APP_NAME = "TSP SOLVER"
     WIDTH = 800
     HEIGHT = 500
 
@@ -62,6 +64,11 @@ class App(customtkinter.CTk):
                                                                        command=self.change_appearance_mode)
         self.appearance_mode_optionemenu.grid(row=6, column=0, padx=(20, 20), pady=(10, 20))
 
+        self.button_find_optimal_path = customtkinter.CTkButton(master=self.frame_left,
+                                                        text="Find Optimal Path",
+                                                        command=self.find_optimal_path)
+        self.button_find_optimal_path.grid(pady=(20, 0), padx=(20, 20), row=2, column=0)
+
         # ============ frame_right ============
 
         self.frame_right.grid_rowconfigure(1, weight=1)
@@ -89,8 +96,30 @@ class App(customtkinter.CTk):
         self.map_option_menu.set("OpenStreetMap")
         self.appearance_mode_optionemenu.set("Dark")
 
+    def find_optimal_path(self):
+        # Extract coordinates of markers
+        marker_coordinates = [(marker.x, marker.y) for marker in self.marker_list]
+
+        # Calculate distances between markers (for simplicity, using Euclidean distance)
+        distances = [[((x1 - x2)**2 + (y1 - y2)**2)**0.5 for x1, y1 in marker_coordinates] for x2, y2 in marker_coordinates]
+
+        # Create NearestNeighbor instance
+        nn_solver = NearestNeighbor(distances)
+
+        # Find optimal path
+        optimal_path, _ = nn_solver.tsp_nearest_neighbor()
+
+        # Draw the optimal path on the map
+        for i in range(len(optimal_path) - 1):
+            start_marker = self.marker_list[optimal_path[i]]
+            end_marker = self.marker_list[optimal_path[i+1]]
+            self.map_widget.create_line(start_marker.x, start_marker.y, end_marker.x, end_marker.y, color="red")
+
+
+
     def search_event(self, event=None):
         self.map_widget.set_address(self.entry.get())
+        print(self.map_widget.set_address(self.entry.get()))
 
     def set_marker_event(self):
         current_position = self.map_widget.get_position()
@@ -104,10 +133,10 @@ class App(customtkinter.CTk):
         customtkinter.set_appearance_mode(new_appearance_mode)
 
     def change_map(self, new_map: str):
-        if new_map == "OpenStreetMap":
-            self.map_widget.set_tile_server("https://a.tile.openstreetmap.org/{z}/{x}/{y}.png")
-        elif new_map == "Google normal":
+        if new_map == "Google normal":
             self.map_widget.set_tile_server("https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)
+        elif new_map == "OpenStreetMap":
+            self.map_widget.set_tile_server("https://a.tile.openstreetmap.org/{z}/{x}/{y}.png")
         elif new_map == "Google satellite":
             self.map_widget.set_tile_server("https://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)
 
