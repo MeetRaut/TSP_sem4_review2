@@ -1,9 +1,10 @@
 # main.py
 import customtkinter
 from tkintermapview import TkinterMapView
-import tkinter.simpledialog as simpledialog
+#import tkinter.simpledialog as simpledialog
 from NN import NearestNeighbor  
 import csv
+import os
 
 customtkinter.set_default_color_theme("blue")
 
@@ -59,17 +60,7 @@ class App(customtkinter.CTk):
                                                         command=self.find_optimal_path)
         self.button_find_optimal_path.grid(pady=(20, 0), padx=(20, 20), row=2, column=0)
 
-        self.map_label = customtkinter.CTkLabel(self.frame_left, text="Tile Server:", anchor="w")
-        self.map_label.grid(row=3, column=0, padx=(20, 20), pady=(20, 0))
-        self.map_option_menu = customtkinter.CTkOptionMenu(self.frame_left, values=["OpenStreetMap", "Google normal", "Google satellite"],
-                                                                       command=self.change_map)
-        self.map_option_menu.grid(row=4, column=0, padx=(20, 20), pady=(10, 0))
-
-        self.appearance_mode_label = customtkinter.CTkLabel(self.frame_left, text="Appearance Mode:", anchor="w")
-        self.appearance_mode_label.grid(row=5, column=0, padx=(20, 20), pady=(20, 0))
-        self.appearance_mode_optionemenu = customtkinter.CTkOptionMenu(self.frame_left, values=["Light", "Dark", "System"],
-                                                                       command=self.change_appearance_mode)
-        self.appearance_mode_optionemenu.grid(row=6, column=0, padx=(20, 20), pady=(10, 20))
+    
 
         
 
@@ -85,7 +76,7 @@ class App(customtkinter.CTk):
         self.map_widget.grid(row=1, rowspan=1, column=0, columnspan=3, sticky="nswe", padx=(0, 0), pady=(0, 0))
 
         self.entry = customtkinter.CTkEntry(master=self.frame_right,
-                                            placeholder_text="type address")
+                                            placeholder_text="Search city")
         self.entry.grid(row=0, column=0, sticky="we", padx=(12, 0), pady=12)
         self.entry.bind("<Return>", self.search_event)
 
@@ -97,14 +88,48 @@ class App(customtkinter.CTk):
 
         # Set default values
         self.map_widget.set_address("India")
-        self.map_option_menu.set("OpenStreetMap")
-        self.appearance_mode_optionemenu.set("Dark")
+        self.map_widget.set_tile_server("https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)
 
         # Load existing data from the CSV file if it exists
         self.city_data = self.load_city_data()
 
 
+    # Search city 
+    def search_event(self, event=None):
+        App.address = self.entry.get()
+        self.map_widget.set_address(App.address)
+        latitude, longitude = self.map_widget.get_position()
+        print(f"Coordinates of {App.address}: Latitude: {latitude}, Longitude: {longitude}")
     
+
+    # Set marker 
+    def set_marker_event(self):
+        current_position = self.map_widget.get_position()
+        city_name = App.address
+        if city_name:
+            self.marker_list.append(self.map_widget.set_marker(current_position[0], current_position[1]))
+            self.city_data[city_name] = current_position
+            self.save_city_data()
+            print("Set marker at: ", "city:", city_name, current_position[0], current_position[1] )
+
+    
+    # Clear marker and delete csv file
+    def clear_marker_event(self):
+        # Delete the CSV file
+        if os.path.exists('city_data.csv'):
+            os.remove('city_data.csv')
+            print("'city_data.csv' file removed successfully!")
+
+        # Clear markers from the map
+        for marker in self.marker_list:
+            marker.delete()
+
+        # Clear marker list
+        self.marker_list = []
+
+        # Clear city data
+        self.city_data = {}
+
     def load_city_data(self):
         try:
             with open('city_data.csv', 'r') as file:
@@ -126,7 +151,7 @@ class App(customtkinter.CTk):
     def find_optimal_path(self):
         # Extract coordinates of cities
         city_coordinates = list(self.city_data.values())
-        print("Find optimal path: ", city_coordinates)
+        print("Co-ordinates of given cities: ", city_coordinates)
 
         # Calculate distances between cities (for simplicity, using Euclidean distance)
         distances = [[((x1 - x2)**2 + (y1 - y2)**2)**0.5 for x1, y1 in city_coordinates] for x2, y2 in city_coordinates]
@@ -149,39 +174,19 @@ class App(customtkinter.CTk):
 
 
 
-    def search_event(self, event=None):
-        App.address = self.entry.get()
-        self.map_widget.set_address(App.address)
-        latitude, longitude = self.map_widget.get_position()
-        print(f"Coordinates of {App.address}: Latitude: {latitude}, Longitude: {longitude}")
+    
         
 
+    
 
-    def set_marker_event(self):
-        current_position = self.map_widget.get_position()
-        city_name = App.address
-        if city_name:
-            self.marker_list.append(self.map_widget.set_marker(current_position[0], current_position[1]))
-            self.city_data[city_name] = current_position
-            self.save_city_data()
-            print("Set marker at: ", current_position[0], current_position[1], "for city:", city_name)
+    
 
         
 
-    def clear_marker_event(self):
-        for marker in self.marker_list:
-            marker.delete()
+    
 
-    def change_appearance_mode(self, new_appearance_mode: str):
-        customtkinter.set_appearance_mode(new_appearance_mode)
+   
 
-    def change_map(self, new_map: str):
-        if new_map == "Google normal":
-            self.map_widget.set_tile_server("https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)
-        elif new_map == "OpenStreetMap":
-            self.map_widget.set_tile_server("https://a.tile.openstreetmap.org/{z}/{x}/{y}.png")
-        elif new_map == "Google satellite":
-            self.map_widget.set_tile_server("https://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)
 
     def on_closing(self, event=0):
         self.destroy()
