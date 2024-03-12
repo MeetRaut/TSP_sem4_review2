@@ -55,10 +55,7 @@ class App(customtkinter.CTk):
                                                 command=self.clear_marker_event)
         self.button_2.grid(pady=(20, 0), padx=(20, 20), row=1, column=0)
 
-        self.button_find_optimal_path = customtkinter.CTkButton(master=self.frame_left,
-                                                        text="Find Optimal Path",
-                                                        command=self.find_optimal_path)
-        self.button_find_optimal_path.grid(pady=(20, 0), padx=(20, 20), row=2, column=0)
+        
 
     
 
@@ -85,6 +82,11 @@ class App(customtkinter.CTk):
                                                 width=90,
                                                 command=self.search_event)
         self.button_5.grid(row=0, column=1, sticky="w", padx=(12, 0), pady=12)
+
+        self.button_find_optimal_path = customtkinter.CTkButton(master=self.frame_right,
+                                                        text="Find Optimal Path",
+                                                        command=self.find_optimal_path)
+        self.button_find_optimal_path.grid(row=0, column=2)
 
         # Set default values
         self.map_widget.set_address("India")
@@ -120,7 +122,7 @@ class App(customtkinter.CTk):
             os.remove('city_data.csv')
             print("'city_data.csv' file removed successfully!")
 
-        # Clear markers from the map
+        # Clear markers from the mapa
         for marker in self.marker_list:
             marker.delete()
 
@@ -167,25 +169,6 @@ class App(customtkinter.CTk):
             start_city = list(self.city_data.keys())[optimal_path[i]]
             end_city = list(self.city_data.keys())[optimal_path[i+1]]
             print("Optimal path:", start_city, "->", end_city)
-
-
-
-
-
-
-
-    
-        
-
-    
-
-    
-
-        
-
-    
-
-   
 
 
     def on_closing(self, event=0):
