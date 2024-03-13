@@ -16,6 +16,7 @@ pip install tkintermapview
 ![Search and mark (GUI)](https://github.com/MeetRaut/TSP_sem4_review2/assets/122288042/053b08cf-d013-43ed-aba1-09d8fe867708)
 
   - Terminal
+  - 
 ![Search and mark (Terminal)](https://github.com/MeetRaut/TSP_sem4_review2/assets/122288042/1484274e-cdf9-475e-b2f3-49125c07997c)
 
 3. Finding the Optimal Path: 
