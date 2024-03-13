@@ -23,4 +23,5 @@ pip install tkintermapview
 ![Find optimal path (GUI)](https://github.com/MeetRaut/TSP_sem4_review2/assets/122288042/5db3aee9-04e1-460d-9fd0-6967d975463a)
 
   - Terminal
+![Find Optimal Path (Terminal)](https://github.com/MeetRaut/TSP_sem4_review2/assets/122288042/52bbfef3-b431-4e82-a458-b8b71447095d)
 
