@@ -170,6 +170,11 @@ class App(customtkinter.CTk):
         optimal_path, _ = nn_solver.tsp_nearest_neighbor()
 
         # Draw the optimal path on the map
+        for i in range(len(optimal_path) - 1):
+            start_city = list(self.city_data.keys())[optimal_path[i]]
+            end_city = list(self.city_data.keys())[optimal_path[i+1]]
+            print("Optimal path:", start_city, "->", end_city)
+
         path_positions = []
         for i in range(len(optimal_path)):
             city_name = list(self.city_data.keys())[optimal_path[i]]
