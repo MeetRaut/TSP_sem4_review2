@@ -88,6 +88,11 @@ class App(customtkinter.CTk):
                                                         command=self.find_optimal_path)
         self.button_find_optimal_path.grid(row=0, column=2)
 
+
+        # Fixing the 'w' problem
+        
+
+
         # Set default values
         self.map_widget.set_address("India")
         self.map_widget.set_tile_server("https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)
@@ -165,10 +170,15 @@ class App(customtkinter.CTk):
         optimal_path, _ = nn_solver.tsp_nearest_neighbor()
 
         # Draw the optimal path on the map
-        for i in range(len(optimal_path) - 1):
-            start_city = list(self.city_data.keys())[optimal_path[i]]
-            end_city = list(self.city_data.keys())[optimal_path[i+1]]
-            print("Optimal path:", start_city, "->", end_city)
+        path_positions = []
+        for i in range(len(optimal_path)):
+            city_name = list(self.city_data.keys())[optimal_path[i]]
+            position = self.city_data[city_name]
+            path_positions.append(position)
+
+        # Set path on the map
+        self.map_widget.set_path(path_positions, color="red", width=2)
+
 
 
     def on_closing(self, event=0):
