@@ -1,4 +1,4 @@
-![image](https://github.com/MeetRaut/TSP_sem4_review2/assets/122288042/cd574a97-dbff-434f-aa25-9bcc38d9db6c)# TSP_sem4_review2
+# TSP_sem4_review2
 TSP solver for MPR Sem 4 review 2
 
 install dependencies:
