@@ -137,6 +137,9 @@ class App(customtkinter.CTk):
         # Clear city data
         self.city_data = {}
 
+        # Removing all paths from GUI
+        self.map_widget.delete_all_path()
+
     def load_city_data(self):
         try:
             with open('city_data.csv', 'r') as file:
