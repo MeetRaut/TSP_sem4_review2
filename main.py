@@ -187,7 +187,7 @@ class App(customtkinter.CTk):
         # Set path on the map
         self.map_widget.set_path(path_positions, color="red", width=2)
 
-
+        
 
     def on_closing(self, event=0):
         self.destroy()
