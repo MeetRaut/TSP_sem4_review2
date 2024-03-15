@@ -1,6 +1,7 @@
 # main.py
 import customtkinter
 from tkintermapview import TkinterMapView
+import tkinter.messagebox as messagebox
 #import tkinter.simpledialog as simpledialog
 from NN import NearestNeighbor  
 import csv
@@ -159,6 +160,11 @@ class App(customtkinter.CTk):
 
 
     def find_optimal_path(self):
+        if not self.city_data:
+            print("Mark cities to find optimal path!")
+            return messagebox.showinfo("Alert", "Mark cities to find optimal path")
+            
+
         # Extract coordinates of cities
         city_coordinates = list(self.city_data.values())
         print("Co-ordinates of given cities: ", city_coordinates)
