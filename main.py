@@ -160,16 +160,25 @@ class App(customtkinter.CTk):
 
 
     def find_optimal_path(self):
-        if not self.city_data:
-            print("Mark cities to find optimal path!")
-            return messagebox.showinfo("Alert", "Mark cities to find optimal path")
-            
+        if not self.marker_list:  # Check if there are no markers on the GUI
+            # Load city data from the CSV file if no markers are found
+            self.city_data = self.load_city_data()
+
+            # Check if there's no city data in the CSV file as well
+            if not self.city_data:
+                print("No city data found. Mark cities to find an optimal path.")
+                messagebox.showinfo("Alert", "No city data found. Mark cities to find an optimal path.")
+                return
+
+            # Plot markers on the map for cities loaded from the CSV file
+            for city, coordinates in self.city_data.items():
+                self.marker_list.append(self.map_widget.set_marker(coordinates[0], coordinates[1]))
 
         # Extract coordinates of cities
         city_coordinates = list(self.city_data.values())
         print("Co-ordinates of given cities: ", city_coordinates)
 
-        # Calculate distances between cities (for simplicity, using Euclidean distance)
+        # Calculate distances between cities (Using Euclidean distance)
         distances = [[((x1 - x2)**2 + (y1 - y2)**2)**0.5 for x1, y1 in city_coordinates] for x2, y2 in city_coordinates]
 
         # Create NearestNeighbor instance
