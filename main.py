@@ -6,6 +6,7 @@ import tkinter.messagebox as messagebox
 from NN import NearestNeighbor  
 import csv
 import os
+import time
 
 customtkinter.set_default_color_theme("blue")
 
@@ -141,6 +142,8 @@ class App(customtkinter.CTk):
         # Removing all paths from GUI
         self.map_widget.delete_all_path()
 
+        
+
     def load_city_data(self):
         try:
             with open('city_data.csv', 'r') as file:
@@ -159,6 +162,7 @@ class App(customtkinter.CTk):
 
 
 
+    # Inside find_optimal_path method
     def find_optimal_path(self):
         if not self.marker_list:  # Check if there are no markers on the GUI
             # Load city data from the CSV file if no markers are found
@@ -173,6 +177,7 @@ class App(customtkinter.CTk):
             # Plot markers on the map for cities loaded from the CSV file
             for city, coordinates in self.city_data.items():
                 self.marker_list.append(self.map_widget.set_marker(coordinates[0], coordinates[1]))
+                
 
         # Extract coordinates of cities
         city_coordinates = list(self.city_data.values())
@@ -187,7 +192,10 @@ class App(customtkinter.CTk):
         # Find optimal path
         optimal_path, _ = nn_solver.tsp_nearest_neighbor()
 
-        # Draw the optimal path on the map
+        # Draw the optimal path on the map with delay
+        self.draw_path_with_delay(optimal_path)
+
+    def draw_path_with_delay(self, optimal_path):
         for i in range(len(optimal_path) - 1):
             start_city = list(self.city_data.keys())[optimal_path[i]]
             end_city = list(self.city_data.keys())[optimal_path[i+1]]
@@ -199,9 +207,13 @@ class App(customtkinter.CTk):
             position = self.city_data[city_name]
             path_positions.append(position)
 
-        # Set path on the map
-        self.map_widget.set_path(path_positions, color="red", width=2)
+        # Set path on the map with delay
+        self.draw_path_step_by_step(path_positions, color="red", width=2, index=0)
 
+    def draw_path_step_by_step(self, path_positions, color, width, index):
+        if index < len(path_positions) - 1:
+            self.map_widget.set_path([path_positions[index], path_positions[index + 1]], color=color, width=width)
+            self.after(500, self.draw_path_step_by_step, path_positions, color, width, index + 1)
         
 
     def on_closing(self, event=0):
