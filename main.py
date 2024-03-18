@@ -2,10 +2,13 @@
 import customtkinter
 from tkintermapview import TkinterMapView
 import tkinter.messagebox as messagebox
-from NN import NearestNeighbor  
 import csv
 import os
 import time
+from NN import NearestNeighbor
+from BnB import BranchAndBound  
+from ACO import AntColonyOptimization
+from haversine import haversine
 
 customtkinter.set_default_color_theme("blue")
 
@@ -54,7 +57,6 @@ class App(customtkinter.CTk):
                                                 command=self.clear_marker_event)
         self.button_2.grid(pady=(20, 0), padx=(20, 20), row=1, column=0)
 
-
         # ============ frame_right ============
 
         self.frame_right.grid_rowconfigure(1, weight=1)
@@ -64,7 +66,7 @@ class App(customtkinter.CTk):
         self.frame_right.grid_columnconfigure(2, weight=1)
 
         self.map_widget = TkinterMapView(self.frame_right, corner_radius=0)
-        self.map_widget.grid(row=1, rowspan=1, column=0, columnspan=3, sticky="nswe", padx=(0, 0), pady=(0, 0))
+        self.map_widget.grid(row=1, rowspan=1, column=0, columnspan=4, sticky="nswe", padx=(0, 0), pady=(0, 0))
 
         self.entry = customtkinter.CTkEntry(master=self.frame_right,
                                             placeholder_text="Search city")
@@ -77,11 +79,16 @@ class App(customtkinter.CTk):
                                                 command=self.search_event)
         self.button_5.grid(row=0, column=1, sticky="w", padx=(12, 0), pady=12)
 
-        self.button_find_optimal_path = customtkinter.CTkButton(master=self.frame_right,
-                                                        text="Find Optimal Path",
-                                                        command=self.find_optimal_path)
-        self.button_find_optimal_path.grid(row=0, column=2)
+        self.algo_options = ["Nearest Neighbor", "Branch and Bound", "Ant Colony Optimization"]  # Available algorithm options
 
+        self.selected_algo = customtkinter.CTkComboBox(master=self.frame_right, values=self.algo_options)
+        self.selected_algo.set("Nearest Neighbor")  # Set default algorithm
+        self.selected_algo.grid(row=0, column=2, padx=(0, 12), sticky="e", pady=12)
+
+        self.button_find_optimal_path = customtkinter.CTkButton(master=self.frame_right,
+                                                                text="Find Optimal Path",
+                                                                command=self.find_optimal_path)
+        self.button_find_optimal_path.grid(row=0, column=3)
 
         # Set default values
         self.map_widget.set_address("India")
@@ -90,16 +97,14 @@ class App(customtkinter.CTk):
         # Load existing data from the CSV file if it exists
         self.city_data = self.load_city_data()
 
-
-    # Search city 
+    # Search city
     def search_event(self, event=None):
         App.address = self.entry.get()
         self.map_widget.set_address(App.address)
         latitude, longitude = self.map_widget.get_position()
         print(f"Coordinates of {App.address}: Latitude: {latitude}, Longitude: {longitude}")
-    
 
-    # Set marker 
+    # Set marker
     def set_marker_event(self):
         current_position = self.map_widget.get_position()
         city_name = App.address
@@ -107,9 +112,8 @@ class App(customtkinter.CTk):
             self.marker_list.append(self.map_widget.set_marker(current_position[0], current_position[1]))
             self.city_data[city_name] = current_position
             self.save_city_data()
-            print("Set marker at: ", "city:", city_name, current_position[0], current_position[1] )
+            print("Set marker at: ", "city:", city_name, current_position[0], current_position[1])
 
-    
     # Clear marker and delete csv file
     def clear_marker_event(self):
         # Delete the CSV file
@@ -117,7 +121,7 @@ class App(customtkinter.CTk):
             os.remove('city_data.csv')
             print("'city_data.csv' file removed successfully!")
 
-        # Clear markers from the mapa
+        # Clear markers from the map
         for marker in self.marker_list:
             marker.delete()
 
@@ -129,8 +133,6 @@ class App(customtkinter.CTk):
 
         # Removing all paths from GUI
         self.map_widget.delete_all_path()
-
-        
 
     def load_city_data(self):
         try:
@@ -147,9 +149,6 @@ class App(customtkinter.CTk):
             for city, (latitude, longitude) in self.city_data.items():
                 writer.writerow([city, latitude, longitude])
 
-
-
-
     # Inside find_optimal_path method
     def find_optimal_path(self):
         if not self.marker_list:  # Check if there are no markers on the GUI
@@ -165,28 +164,46 @@ class App(customtkinter.CTk):
             # Plot markers on the map for cities loaded from the CSV file
             for city, coordinates in self.city_data.items():
                 self.marker_list.append(self.map_widget.set_marker(coordinates[0], coordinates[1]))
-                
 
         # Extract coordinates of cities
         city_coordinates = list(self.city_data.values())
         print("Co-ordinates of given cities: ", city_coordinates)
 
+        selected_algo = self.selected_algo.get()
+
         # Calculate distances between cities (Using Euclidean distance)
-        distances = [[((x1 - x2)**2 + (y1 - y2)**2)**0.5 for x1, y1 in city_coordinates] for x2, y2 in city_coordinates]
+        # Use Haversine formula:
+        distances = [[haversine(x1, y1, x2, y2) for x1, y1 in city_coordinates] for x2, y2 in city_coordinates]
 
-        # Create NearestNeighbor instance
-        nn_solver = NearestNeighbor(distances)
+        if selected_algo == "Nearest Neighbor":
+            nn_solver = NearestNeighbor(distances)
+            optimal_path, total_distance = nn_solver.tsp_nearest_neighbor()
 
-        # Find optimal path
-        optimal_path, _ = nn_solver.tsp_nearest_neighbor()
+        elif selected_algo == "Branch and Bound":
+            bnb_solver = BranchAndBound(distances)
+            optimal_path, total_distance = bnb_solver.tsp_branch_and_bound()
+
+        elif selected_algo == "Ant Colony Optimization":  # Add ACO algorithm option
+            aco_solver = AntColonyOptimization(distances, num_ants=10, num_iterations=100)
+            optimal_path, total_distance = aco_solver.run()
+
+        else:
+            messagebox.showerror("Error", "Invalid algorithm selected.")
+            return
 
         # Draw the optimal path on the map with delay
         self.draw_path_with_delay(optimal_path)
 
+        # Display total distance traveled
+        approx_total_distance = "{:.2f}".format(total_distance)
+        print("Total Distance", f"Total Distance Traveled: {approx_total_distance} kms")
+        messagebox.showinfo("Total Distance", f"Total Distance Traveled: {approx_total_distance} km")
+        
+
     def draw_path_with_delay(self, optimal_path):
         for i in range(len(optimal_path) - 1):
             start_city = list(self.city_data.keys())[optimal_path[i]]
-            end_city = list(self.city_data.keys())[optimal_path[i+1]]
+            end_city = list(self.city_data.keys())[optimal_path[i + 1]]
             print("Optimal path:", start_city, "->", end_city)
 
         path_positions = []
@@ -202,7 +219,6 @@ class App(customtkinter.CTk):
         if index < len(path_positions) - 1:
             self.map_widget.set_path([path_positions[index], path_positions[index + 1]], color=color, width=width)
             self.after(500, self.draw_path_step_by_step, path_positions, color, width, index + 1)
-        
 
     def on_closing(self, event=0):
         self.destroy()
