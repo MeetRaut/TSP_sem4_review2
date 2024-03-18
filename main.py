@@ -7,6 +7,7 @@ import os
 import time
 from NN import NearestNeighbor
 from BnB import BranchAndBound  
+from haversine import haversine
 
 customtkinter.set_default_color_theme("blue")
 
@@ -171,9 +172,8 @@ class App(customtkinter.CTk):
 
         if selected_algo == "Nearest Neighbor":
             # Calculate distances between cities (Using Euclidean distance)
-            distances = [[((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5 for x1, y1 in city_coordinates] for x2, y2 in
-                         city_coordinates]
-
+            # Use Haversine formula:
+            distances = [[haversine(x1, y1, x2, y2) for x1, y1 in city_coordinates] for x2, y2 in city_coordinates]
             # Create NearestNeighbor instance
             nn_solver = NearestNeighbor(distances)
 
@@ -182,8 +182,8 @@ class App(customtkinter.CTk):
 
         elif selected_algo == "Branch and Bound":
             # Implement Branch and Bound algorithm
-            distances = [[((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5 for x1, y1 in city_coordinates] for x2, y2 in
-                         city_coordinates]
+            # Use Haversine formula:
+            distances = [[haversine(x1, y1, x2, y2) for x1, y1 in city_coordinates] for x2, y2 in city_coordinates]
 
             bnb_solver = BranchAndBound(distances)
             optimal_path, total_distance = bnb_solver.tsp_branch_and_bound()
@@ -196,8 +196,8 @@ class App(customtkinter.CTk):
         self.draw_path_with_delay(optimal_path)
 
         # Display total distance traveled
-        print("Total Distance", f"Total Distance Traveled: {total_distance} units")
-        messagebox.showinfo("Total Distance", f"Total Distance Traveled: {total_distance} units")
+        print("Total Distance", f"Total Distance Traveled: {total_distance} kms")
+        messagebox.showinfo("Total Distance", f"Total Distance Traveled: {total_distance} kms")
         
 
     def draw_path_with_delay(self, optimal_path):
