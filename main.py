@@ -7,6 +7,7 @@ import os
 import time
 from NN import NearestNeighbor
 from BnB import BranchAndBound  
+from ACO import AntColonyOptimization
 from haversine import haversine
 
 customtkinter.set_default_color_theme("blue")
@@ -78,11 +79,11 @@ class App(customtkinter.CTk):
                                                 command=self.search_event)
         self.button_5.grid(row=0, column=1, sticky="w", padx=(12, 0), pady=12)
 
-        self.algo_options = ["Nearest Neighbor", "Branch and Bound"]  # Available algorithm options
+        self.algo_options = ["Nearest Neighbor", "Branch and Bound", "Ant Colony Optimization"]  # Available algorithm options
 
         self.selected_algo = customtkinter.CTkComboBox(master=self.frame_right, values=self.algo_options)
         self.selected_algo.set("Nearest Neighbor")  # Set default algorithm
-        self.selected_algo.grid(row=0, column=2, padx=(0, 12), pady=12)
+        self.selected_algo.grid(row=0, column=2, padx=(0, 12), sticky="e", pady=12)
 
         self.button_find_optimal_path = customtkinter.CTkButton(master=self.frame_right,
                                                                 text="Find Optimal Path",
@@ -170,23 +171,21 @@ class App(customtkinter.CTk):
 
         selected_algo = self.selected_algo.get()
 
-        if selected_algo == "Nearest Neighbor":
-            # Calculate distances between cities (Using Euclidean distance)
-            # Use Haversine formula:
-            distances = [[haversine(x1, y1, x2, y2) for x1, y1 in city_coordinates] for x2, y2 in city_coordinates]
-            # Create NearestNeighbor instance
-            nn_solver = NearestNeighbor(distances)
+        # Calculate distances between cities (Using Euclidean distance)
+        # Use Haversine formula:
+        distances = [[haversine(x1, y1, x2, y2) for x1, y1 in city_coordinates] for x2, y2 in city_coordinates]
 
-            # Find optimal path
+        if selected_algo == "Nearest Neighbor":
+            nn_solver = NearestNeighbor(distances)
             optimal_path, total_distance = nn_solver.tsp_nearest_neighbor()
 
         elif selected_algo == "Branch and Bound":
-            # Implement Branch and Bound algorithm
-            # Use Haversine formula:
-            distances = [[haversine(x1, y1, x2, y2) for x1, y1 in city_coordinates] for x2, y2 in city_coordinates]
-
             bnb_solver = BranchAndBound(distances)
             optimal_path, total_distance = bnb_solver.tsp_branch_and_bound()
+
+        elif selected_algo == "Ant Colony Optimization":  # Add ACO algorithm option
+            aco_solver = AntColonyOptimization(distances, num_ants=10, num_iterations=100)
+            optimal_path, total_distance = aco_solver.run()
 
         else:
             messagebox.showerror("Error", "Invalid algorithm selected.")
@@ -196,8 +195,9 @@ class App(customtkinter.CTk):
         self.draw_path_with_delay(optimal_path)
 
         # Display total distance traveled
-        print("Total Distance", f"Total Distance Traveled: {total_distance} kms")
-        messagebox.showinfo("Total Distance", f"Total Distance Traveled: {total_distance} kms")
+        approx_total_distance = "{:.2f}".format(total_distance)
+        print("Total Distance", f"Total Distance Traveled: {approx_total_distance} kms")
+        messagebox.showinfo("Total Distance", f"Total Distance Traveled: {approx_total_distance} km")
         
 
     def draw_path_with_delay(self, optimal_path):
