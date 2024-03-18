@@ -2,7 +2,6 @@
 import customtkinter
 from tkintermapview import TkinterMapView
 import tkinter.messagebox as messagebox
-#import tkinter.simpledialog as simpledialog
 from NN import NearestNeighbor  
 import csv
 import os
@@ -55,11 +54,6 @@ class App(customtkinter.CTk):
                                                 command=self.clear_marker_event)
         self.button_2.grid(pady=(20, 0), padx=(20, 20), row=1, column=0)
 
-        
-
-    
-
-        
 
         # ============ frame_right ============
 
@@ -87,10 +81,6 @@ class App(customtkinter.CTk):
                                                         text="Find Optimal Path",
                                                         command=self.find_optimal_path)
         self.button_find_optimal_path.grid(row=0, column=2)
-
-
-        # Fixing the 'w' problem
-        
 
 
         # Set default values
